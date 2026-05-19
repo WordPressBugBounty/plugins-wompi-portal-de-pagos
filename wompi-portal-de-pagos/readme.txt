@@ -3,8 +3,8 @@
 Contributors: Wompi
 Tags: Wompi, pasarela de pagos, portal de pagos, Bancolombia, link de pago
 Requires at least: 3.5.0
-Tested up to: 6.7
-Stable tag: 2.0.0
+Tested up to: 6.9
+Stable tag: 3.2.0
 Requires PHP: 7.2
 License: GPL-3.0
 License URI: https://www.gnu.org/licenses/gpl-3.0.html

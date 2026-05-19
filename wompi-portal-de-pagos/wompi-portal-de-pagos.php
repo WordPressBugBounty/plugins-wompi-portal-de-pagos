@@ -5,13 +5,14 @@ defined( 'ABSPATH' ) || exit;
 Plugin Name: Wompi Portal de Pagos
 Plugin URI: https://docs.wompi.co/
 Description: Wompi Portal de Pagos para WooCommerce.
-Version: 2.0.0
+Version: 3.2.0
 Author: Wompi
 Author URI: https://wompi.co/
 Domain Path: /languages
 Text Domain: wompi-portal-de-pagos
 WC requires at least: 3.5.0
-WC tested up to: 8.8.3
+WC tested up to: 10.5.1
+Requires PHP: 7.2
 License: GPL-3.0
 */
 

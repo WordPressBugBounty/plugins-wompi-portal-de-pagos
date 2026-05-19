@@ -50,7 +50,7 @@ class Wompi_Portal_Pagos_Main {
 	 */
 	public function __construct() {
 		// Get settings
-		self::$settings = get_option('woocommerce_wompi_settings');
+		self::refresh_settings();
 
 		// Includes
 		include_once WC_WOMPI_PLUGIN_PATH . '/includes/class-wompi-portal-pagos-gateway-custom.php';
@@ -67,6 +67,7 @@ class Wompi_Portal_Pagos_Main {
 
 		// Hooks
 		add_action('admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ));
+		add_action('woocommerce_update_options_payment_gateways_wompi', array( $this, 'refresh_settings_after_save' ));
 
 		if (isset(self::$settings['enabled']) && 'yes' === self::$settings['enabled'] ) {
 			add_action('woocommerce_after_checkout_validation', array( 'Wompi_Portal_Pagos_Gateway_Custom', 'checkout_validation' ), 10, 2);
@@ -74,6 +75,43 @@ class Wompi_Portal_Pagos_Main {
 			add_action('woocommerce_admin_order_data_after_order_details', array( 'Wompi_Portal_Pagos_Gateway_Custom', 'admin_order_data_after_order_details' ));
 			add_filter('woocommerce_thankyou_order_key', array( 'Wompi_Portal_Pagos_Gateway_Custom', 'thankyou_order_key' ));
 		}
+	}
+
+	/**
+	 * Refresh settings from database
+	 */
+	public static function refresh_settings() {
+		$settings = get_option('woocommerce_wompi_settings', array());
+		
+		// Ensure settings is always an array
+		if (!is_array($settings)) {
+			$settings = array();
+		}
+		
+		self::$settings = $settings;
+	}
+
+	/**
+	 * Get a specific setting value with fallback
+	 * 
+	 * @param string $key Setting key
+	 * @param mixed $default Default value if not found
+	 * @return mixed Setting value
+	 */
+	public static function get_setting($key, $default = '') {
+		// Refresh settings if empty
+		if (empty(self::$settings)) {
+			self::refresh_settings();
+		}
+		
+		return isset(self::$settings[$key]) ? self::$settings[$key] : $default;
+	}
+
+	/**
+	 * Refresh settings after save
+	 */
+	public function refresh_settings_after_save() {
+		self::refresh_settings();
 	}
 
 	/**

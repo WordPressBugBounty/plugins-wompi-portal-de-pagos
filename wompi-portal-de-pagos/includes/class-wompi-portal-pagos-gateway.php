@@ -16,8 +16,6 @@ class WompiPortalPagos_Gateway extends Wompi_Portal_Pagos_Gateway_Custom {
 	 * Constructor for the gateway.
 	 */
 	public function __construct() {
-		$options = Wompi_Portal_Pagos_Main::$settings;
-
 		$this->id                 = 'wompi';
 		$this->method_title       = 'WOMPI';
 		$this->method_description = sprintf(
@@ -29,23 +27,43 @@ class WompiPortalPagos_Gateway extends Wompi_Portal_Pagos_Gateway_Custom {
 		$this->has_fields = false;
 		$this->init_form_fields();
 		$this->init_settings();
-		$this->enabled          = $options['enabled'] ?? '';
+		
+		// Load settings using WooCommerce's built-in method for better compatibility
+		$this->enabled          = $this->get_option('enabled', '');
 		$this->icon             = WC_WOMPI_PLUGIN_URL . '/assets/img/wompi-logo.png';
-		$this->title            = '';
-		$this->description      = $options['description'] ?? '';
-		$this->testmode         = $options['testmode'] ?? '';
+		$this->title            = $this->get_option('title', '');
+		$this->description      = $this->get_option('description', '');
+		$this->testmode         = $this->get_option('testmode', '');
 		$this->supports         = array(
 			'products'
 		);
-		$this->public_key       = 'yes' == $this->testmode ? $options['test_public_key'] ?? '' : $options['public_key'] ?? '';
-		$this->private_key      = 'yes' == $this->testmode ? $options['test_private_key'] ?? '' : $options['private_key'] ?? '';
-		$this->event_secret_key = 'yes' == $this->testmode ? $options['test_event_secret_key'] ?? '' : $options['event_secret_key'] ?? '';
-		$this->integrity_key    = 'yes' == $this->testmode ? $options['test_integrity_key'] ?? '' : $options['integrity_key'] ?? '';
+		
+		// Set API keys based on test mode
+		if ('yes' === $this->testmode) {
+			$this->public_key       = $this->get_option('test_public_key', '');
+			$this->private_key      = $this->get_option('test_private_key', '');
+			$this->event_secret_key = $this->get_option('test_event_secret_key', '');
+			$this->integrity_key    = $this->get_option('test_integrity_key', '');
+		} else {
+			$this->public_key       = $this->get_option('public_key', '');
+			$this->private_key      = $this->get_option('private_key', '');
+			$this->event_secret_key = $this->get_option('event_secret_key', '');
+			$this->integrity_key    = $this->get_option('integrity_key', '');
+		}
 
 		add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
+		add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'refresh_main_settings'));
+		
 		if ('yes' === $this->enabled) {
 			$this->init_hooks();
 		}
+	}
+
+	/**
+	 * Refresh main settings after save
+	 */
+	public function refresh_main_settings() {
+		Wompi_Portal_Pagos_Main::refresh_settings();
 	}
 
 	/**

@@ -41,6 +41,8 @@ class Wompi_Portal_Pagos_Gateway_Custom extends WC_Payment_Gateway {
 
 	/**
 	 * Enqueue the Wompi widget script and localize data for the script.
+	 * Uses the WidgetCheckout API to auto-open the payment widget.
+	 * Docs: https://docs.wompi.co/docs/colombia/widget-checkout-web/#botón-personalizado-opcional
 	 *
 	 * @param int $order_id The ID of the order.
 	 */
@@ -51,50 +53,68 @@ class Wompi_Portal_Pagos_Gateway_Custom extends WC_Payment_Gateway {
 
 		// Variables needed for the script
 		$amount_in_cents = $order->get_total() * 100; // WooCommerce stores amounts as float, convert to cents
-		$public_key      = 'yes' === Wompi_Portal_Pagos_Main::$settings['testmode'] ? Wompi_Portal_Pagos_Main::$settings['test_public_key'] : Wompi_Portal_Pagos_Main::$settings['public_key'];
-		$integrity_key   = 'yes' === Wompi_Portal_Pagos_Main::$settings['testmode'] ? Wompi_Portal_Pagos_Main::$settings['test_integrity_key'] : Wompi_Portal_Pagos_Main::$settings['integrity_key'];
+		$public_key      = 'yes' === Wompi_Portal_Pagos_Main::get_setting('testmode') ? Wompi_Portal_Pagos_Main::get_setting('test_public_key', '') : Wompi_Portal_Pagos_Main::get_setting('public_key', '');
+		$integrity_key   = 'yes' === Wompi_Portal_Pagos_Main::get_setting('testmode') ? Wompi_Portal_Pagos_Main::get_setting('test_integrity_key', '') : Wompi_Portal_Pagos_Main::get_setting('integrity_key', '');
 		$currency        = $order->get_currency();
 		$signature       = hash('sha256', "{$order_id}{$amount_in_cents}{$currency}{$integrity_key}");
 		$checkout_url    = $this->checkout_url;
 
-		// Register and enqueue the widget script
+		// Load widget.js only once
 		wp_enqueue_script('wompi-widget', esc_url($checkout_url . '/widget.js'), array(), '1.0.0', true);
 
 		// Pass data to JavaScript
+		$redirect_url = $order->get_checkout_order_received_url();
+		
+		// CloudFront blocks localhost URLs, use fallback for local development
+		if (strpos($redirect_url, 'localhost') !== false || strpos($redirect_url, '127.0.0.1') !== false) {
+			$redirect_url = 'https://wompi.co';
+		}
+		
 		$wompi_data = array(
 			'checkoutUrl' => esc_url($checkout_url),
 			'signature' => esc_attr($signature),
 			'publicKey' => esc_attr($public_key),
 			'currency' => esc_attr($currency),
-			'amountInCents' => esc_attr($amount_in_cents),
+			'amountInCents' => intval($amount_in_cents),
 			'reference' => esc_attr($order_id),
-			'redirectUrl' => esc_url($order->get_checkout_order_received_url()),
+			'redirectUrl' => esc_url($redirect_url),
 		);
 
-		// Locate script
 		wp_localize_script('wompi-widget', 'wompiData', $wompi_data);
 
-		// Inyectar script personalizado para configurar el widget
+		// Render standard Wompi button as fallback + auto-open widget on load
 		$inline_script = "
             document.addEventListener('DOMContentLoaded', function() {
-                var script = document.createElement('script');
-                script.src = wompiData.checkoutUrl + '/widget.js';
-                script.setAttribute('data-render', 'button');
-                script.setAttribute('data-signature:integrity', wompiData.signature);
-                script.setAttribute('data-public-key', wompiData.publicKey);
-                script.setAttribute('data-currency', wompiData.currency);
-                script.setAttribute('data-amount-in-cents', wompiData.amountInCents);
-                script.setAttribute('data-reference', wompiData.reference);
-                script.setAttribute('data-redirect-url', wompiData.redirectUrl);
-                document.querySelector('.wompi-button-holder').appendChild(script);
-                
-				var checkButtonInterval = setInterval(function() {
-					var button = document.querySelector('.wompi-button-holder button');
-					if (button) {
-						button.click();  // Disparar el evento de clic en el botón para abrir el widget
-						clearInterval(checkButtonInterval); // Detener la verificación
-					}
-				}, 100);
+                // Render the standard Wompi button inside the holder
+                var holder = document.querySelector('.wompi-button-holder');
+                if (holder) {
+                    var script = document.createElement('script');
+                    script.src = wompiData.checkoutUrl + '/widget.js';
+                    script.setAttribute('data-render', 'button');
+                    script.setAttribute('data-public-key', wompiData.publicKey);
+                    script.setAttribute('data-currency', wompiData.currency);
+                    script.setAttribute('data-amount-in-cents', wompiData.amountInCents);
+                    script.setAttribute('data-reference', wompiData.reference);
+                    script.setAttribute('data-signature:integrity', wompiData.signature);
+                    script.setAttribute('data-redirect-url', wompiData.redirectUrl);
+                    holder.appendChild(script);
+                }
+
+                // Auto-open the widget using WidgetCheckout API
+                var checkout = new WidgetCheckout({
+                    currency: wompiData.currency,
+                    amountInCents: wompiData.amountInCents,
+                    reference: wompiData.reference,
+                    publicKey: wompiData.publicKey,
+                    signature: { integrity: wompiData.signature },
+                    redirectUrl: wompiData.redirectUrl
+                });
+                checkout.open(function(result) {
+                    var transaction = result.transaction;
+                    if (transaction && transaction.redirectUrl) {
+                        window.location.href = transaction.redirectUrl;
+                    }
+                });
             });
         ";
 

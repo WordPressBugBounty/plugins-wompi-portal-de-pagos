@@ -220,11 +220,10 @@ class Wompi_Portal_Pagos_Webhook_Handler {
 			//concatenate timestamp
 			$toHash .= $response->timestamp;
 			//concatenate event private key
-			$options = Wompi_Portal_Pagos_Main::$settings;
-			if ('yes' === $options['testmode']) {
-				$toHash .= $options['test_event_secret_key'];
+			if ('yes' === Wompi_Portal_Pagos_Main::get_setting('testmode')) {
+				$toHash .= Wompi_Portal_Pagos_Main::get_setting('test_event_secret_key', '');
 			} else {
-				$toHash .= $options['event_secret_key'];
+				$toHash .= Wompi_Portal_Pagos_Main::get_setting('event_secret_key', '');
 			}
 			return hash('sha256', $toHash) === $response->signature->checksum;
 		} catch (\Exception $e) {

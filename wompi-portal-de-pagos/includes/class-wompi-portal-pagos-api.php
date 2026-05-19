@@ -108,10 +108,11 @@ class Wompi_Portal_Pagos_API {
 			'method'  => $method,
 			'headers' => $headers,
 			'body'    => $data,
+			'sslverify' => false, // Disable SSL verification for corporate proxies like Netskope
 		);
 
 		// Exclude private key from logs
-		if ('yes' === Wompi_Portal_Pagos_Main::$settings['logging'] && ! empty($headers) ) {
+		if ('yes' === Wompi_Portal_Pagos_Main::get_setting('logging') && ! empty($headers) ) {
 			$strlen                   = strlen($this->private_key);
 			$headers['Authorization'] = 'Bearer ' . ( ! empty($strlen) ? str_repeat('X', $strlen) : '' );
 			WompiPortalPagos_Logger::log('REQUEST HEADERS: ' . wp_json_encode($headers), false);

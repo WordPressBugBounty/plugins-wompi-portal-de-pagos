@@ -1,5 +1,22 @@
 *** Changelog ***
 
+2026-05-19 - versión 3.2.0
+* Updated - Se actualiza la versión del plugin a 3.2.0
+* Updated - Se actualiza el Stable tag en readme.txt a 3.2.0
+* Updated - Se actualiza la versión en el archivo principal del plugin (wompi-portal-de-pagos.php)
+
+2026-03-16 - versión 3.0.0
+* Improved - Se elimina la doble carga de widget.js para evitar conflictos en el renderizado del botón de pago
+* Improved - Se implementa auto-apertura del widget de pago usando la API WidgetCheckout de Wompi
+* Improved - Se mantiene el botón estándar de Wompi como fallback si el usuario cierra el popup
+
+2026-03-05 - versión 2.1.0
+* Fixed - Se corrige el problema de compatibilidad con WooCommerce 10.5.1, WordPress 6.9.1 y PHP 8.3
+* Fixed - Se mejora el manejo de opciones de configuración usando el método get_option() de WooCommerce
+* Fixed - Se añade método get_setting() para acceso robusto a las configuraciones
+* Fixed - Se actualiza el sistema de guardado de opciones para refrescar automáticamente después de guardar
+* Updated - Se actualiza la versión de WooCommerce soportada a 10.5.1
+
 2024-12-20 - versión 2.0.0
 * Added - Se traduce el readme.txt al español
 * Added - Se traduce el changelog.txt al español

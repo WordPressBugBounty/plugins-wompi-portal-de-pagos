@@ -73,7 +73,6 @@ class WC_Wompi_Admin_Notices {
 					|| empty($test_secret_key) 
 					|| empty($test_event_secret_key) 
 					|| empty($test_integrity_key) 
-					|| empty($supported_currency) 
 				) {
 					// translators: %s: wompi settings link
 					$this->add_admin_notice('wc_wompi', 'notice notice-error', sprintf(__('Wompi is in test mode however your test keys may not be valid. Please go to your settings and, <a href="%s">set your Wompi account keys</a>.', 'wompi-portal-de-pagos'), $setting_link));

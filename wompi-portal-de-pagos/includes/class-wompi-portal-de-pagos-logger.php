@@ -32,9 +32,7 @@ class WompiPortalPagos_Logger {
 				}
 			}
 
-			$settings = Wompi_Portal_Pagos_Main::$settings;
-
-			if (empty($settings) || ( isset($settings['logging']) && 'yes' !== $settings['logging'] )) {
+			if ('yes' !== Wompi_Portal_Pagos_Main::get_setting('logging')) {
 				return;
 			}
 
